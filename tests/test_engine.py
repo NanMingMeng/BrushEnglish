@@ -80,3 +80,18 @@ def test_dry_run_blocks_click_key_type_move(monkeypatch):
         assert calls == []
     finally:
         engine.DRY_RUN = old_dry_run
+
+
+def test_screen_word_prefers_known_group_word(monkeypatch):
+    monkeypatch.setattr(engine, "TEST_WORD_REGION", None)
+    monkeypatch.setattr(engine, "REGION_QUESTION_TYPE", (0, 0, 100, 200))
+    monkeypatch.setattr(engine, "REGION_OPTION", [(1400, 388, 1900, 440)])
+    monkeypatch.setattr(engine, "ONECLASS_X_MIN", 1000)
+    monkeypatch.setattr(engine, "ocr_full_screen", lambda: [
+        {"text": "Rapid", "x": 1120, "y": 210},
+        {"text": "hello", "x": 1500, "y": 250},
+        {"text": "world", "x": 1500, "y": 300},
+    ])
+
+    word_dict = {"1": {"word": "hello", "meaning": "int. 喂"}}
+    assert engine.ocr_screen_word(word_dict) == "hello"
