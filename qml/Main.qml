@@ -29,6 +29,7 @@ ApplicationWindow {
     // 随机休息 / 听音识别开关（启动时从配置恢复）
     property bool restEnabled: true
     property bool asrEnabled: true
+    property bool dryRunEnabled: false
 
     // 认字引擎状态
     property bool ocrOk: false
@@ -79,6 +80,7 @@ ApplicationWindow {
 
         win.asrEnabled = (backend.spellingSource() !== "wordlist");
         win.restEnabled = backend.randomBreakEnabled();
+        win.dryRunEnabled = backend.dryRunEnabled();
 
         var g = backend.windowGeometry();
         if (g && g.w > 0 && g.h > 0) {
@@ -323,6 +325,19 @@ ApplicationWindow {
                     onClicked: {
                         win.asrEnabled = checked;
                         backend.setSpellingSource(checked ? "asr" : "wordlist");
+                    }
+                }
+
+                // 干跑模式：只识别、计算，不点击、不输入
+                ActionButton {
+                    id: dryRunBtn
+                    text: win.width > 1000 ? ("干跑" + (checked ? "开" : "关")) : "干跑"
+                    variant: checked ? "primary" : "neutral"
+                    checkable: true
+                    checked: win.dryRunEnabled
+                    onClicked: {
+                        win.dryRunEnabled = checked;
+                        backend.setDryRun(checked);
                     }
                 }
 
