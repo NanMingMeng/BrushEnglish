@@ -264,6 +264,10 @@ class AppController(QObject):
             engine = self._load_engine()
             self.engine = engine
             try:
+                engine.DRY_RUN = self.dryRunEnabled()
+            except Exception:
+                pass
+            try:
                 engine.save_monitor_state()
             except Exception:
                 pass
@@ -1113,6 +1117,33 @@ class AppController(QObject):
             self.toast.emit("随机休息已" + ("开启" if flag else "关闭"))
         except Exception as e:
             self.toast.emit("保存随机休息设置失败：%s" % e)
+
+    # ================= 干跑开关 =================
+    @Slot(str)
+    def setDryRun(self, on: str) -> None:
+        """干跑开关：只识别、不点击、不输入。"""
+        try:
+            flag = str(on).lower() in ("1", "true", "yes", "on")
+            cfg = settings.read_json(paths.config_file(), {}) or {}
+            cfg["dry_run"] = flag
+            settings.write_json(paths.config_file(), cfg)
+            if self.engine is not None:
+                try:
+                    self.engine.DRY_RUN = flag
+                except Exception:
+                    pass
+            self.toast.emit("干跑模式已" + ("开启（只识别不点击）" if flag else "关闭"))
+        except Exception as e:
+            self.toast.emit("保存干跑设置失败：%s" % e)
+
+    @Slot(result=bool)
+    def dryRunEnabled(self) -> bool:
+        """当前干跑开关状态。"""
+        try:
+            cfg = settings.read_json(paths.config_file(), {}) or {}
+            return bool(cfg.get("dry_run", False))
+        except Exception:
+            return False
 
     @Slot(result=bool)
     def randomBreakEnabled(self) -> bool:
