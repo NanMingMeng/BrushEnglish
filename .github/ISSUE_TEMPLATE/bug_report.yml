@@ -1,0 +1,42 @@
+name: Bug 报告
+description: 程序崩溃、点错位置、识别错误等问题
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请尽量附上日志和截图，方便定位问题。
+  - type: textarea
+    id: what
+    attributes:
+      label: 问题描述
+      description: 发生了什么？你期望发生什么？
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 你是怎样操作到出问题的？
+      placeholder: |
+        1. 打开助手
+        2. 选择 Rapid 引擎
+        3. 点击开始运行
+        4. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 项目版本
+      description: 在 README 或发布页可以看到
+  - type: input
+    id: system
+    attributes:
+      label: 系统环境
+      description: Windows 版本、屏幕分辨率、缩放比例
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志
+      description: 把 logs/run_YYYYMMDD.log 里最近的错误段贴上来
