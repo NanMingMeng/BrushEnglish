@@ -1,4 +1,5 @@
 {
+  "dry_run": false,
   "umi_ocr": {
     "url": "http://127.0.0.1:1224/api/ocr",
     "timeout": 10,
