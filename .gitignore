@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*.bak*
+*.log
+*.exe
+.venv/
+venv/
+
+# 个人运行数据（不要提交）
+logs/
+测试截图/
+学习截图/
+coordinate_previews/
+screenshots/
+config.json
+ui_settings.json
+stats.json
+progress.json
+monitor_state.json
+word_dict_umi.json
+拼写反馈记录.jsonl
+
+# 打包产物和引擎二进制
+dist/
+build/
+内置OCR/
+*.spec.bak
