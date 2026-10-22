@@ -1,12 +1,14 @@
 # 刷单词助手 · BrushEnglish
 
+[![CI](https://github.com/NanMingMeng/BrushEnglish/actions/workflows/ci.yml/badge.svg)](https://github.com/NanMingMeng/BrushEnglish/actions/workflows/ci.yml)
+
 一个 Windows 桌面端的背单词自动化助手。它把「学习单词 → 测试 → 成绩统计」这一套流程做成图形界面，支持本地 OCR 认字、语音识别拼写、选择题自动匹配和进度恢复。
 
 > 本项目仅供个人学习与自动化研究使用。使用前请确认你使用的目标应用允许自动化操作。
 
 ## 功能
 
-- 图形界面：PySide6 + QML，浅色主题，可缩放窗口
+- 图形界面：PySide6 + QML，浅色/深色主题，可缩放窗口
 - 学习阶段：自动翻词、点击释义、标记“太简单”、每 7 个词继续下一批
 - 测试阶段：自动识别题号、题型、选项和拼写题
 - 认字引擎：内置 RapidOCR / PaddleOCR，也可连接外部 Umi-OCR
@@ -14,7 +16,11 @@
 - 选择题匹配：词性 + 中文关键词 + 整句相似度打分，低置信度时不乱选
 - 进度恢复：按 App 显示进度校准，支持断电/重启后续跑
 - 自动恢复：页面跑偏、OCR 失败时自动重试导航，多次失败后停止并提示
-- 词典工具：支持导出词表、补全缺失释义
+- 词典工具：词表释义缺失时自动查询总题库（ECDICT 派生，11500 词）
+
+## 界面预览
+
+> 界面截图会在下个版本更新后补充到 `docs/images/`。当前 UI 以实际运行效果为准。
 
 ## 目录结构
 
@@ -26,6 +32,9 @@ qml/                       界面（主窗口、组件、页面）
 coordinate_profiles.py     坐标方案管理
 auto_updater.py            版本检查（示例地址，需自行修改）
 题库/                      通用考试词典（ECDICT 派生）
+docs/FAQ.md                常见问题
+tests/                     单元测试
+tools/qml_selfcheck.py     QML 离屏自检
 config.example.json        示例配置
 ```
 
@@ -66,6 +75,41 @@ python 刷单词助手新版.py
 
 这些运行数据默认已被 `.gitignore` 排除，不会上传。
 
+## 常见问题
+
+见 [docs/FAQ.md](docs/FAQ.md)，包括：
+
+- OCR 报 10061 怎么办
+- 坐标对不上怎么校准
+- 拼写题听不到声音
+- 为什么弹出“选择题没把握”
+- 进度和 App 显示不一致
+
+## 开发与测试
+
+```bash
+pip install PySide6-Essentials==6.8.3 pyautogui keyboard pillow numpy requests mss pytest
+python -m pytest -q tests
+python tools/qml_selfcheck.py
+```
+
+## 路线图
+
+- 首次使用向导（自动检测 OCR、试录、校准）
+- 坐标按分辨率/DPI 自动缩放
+- 干跑模式（只识别不点击）
+- 日志搜索与导出
+- 安装包与自动更新
+- 中英文双语文档
+
+## 参与贡献
+
+欢迎提交 issue 和 PR。请先阅读 [docs/FAQ.md](docs/FAQ.md)，并尽量附上日志和复现步骤。
+
+## 隐私
+
+截图、录音、学习记录和日志都只保存在本机。项目没有遥测，不会把数据上传到服务器。
+
 ## 词典来源
 
 `题库/题库_通用考试词典.json` 由开源项目 **ECDICT** 整理而来：
@@ -77,9 +121,8 @@ python 刷单词助手新版.py
 
 ## 许可证
 
-本项目使用 **GPL-3.0** 许可证，详见 `LICENSE`。
+本项目使用 **GPL-3.0** 许可证，详见 [LICENSE](LICENSE)。
 
-## 说明
+## 更新日志
 
-- 仓库只包含源码和示例配置，不包含打包后的 exe、OCR 引擎二进制、运行日志和截图。
-- 自动化脚本涉及屏幕截图、鼠标键盘模拟和 OCR，请在了解风险的前提下使用。
+见 [CHANGELOG.md](CHANGELOG.md)。
