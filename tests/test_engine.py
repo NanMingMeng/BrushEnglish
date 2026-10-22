@@ -49,3 +49,13 @@ def test_dictionary_lookup_missing_word():
     meaning, source = engine.lookup_word_meaning("adi", None)
     assert meaning is None
     assert source is None
+
+
+def test_coordinate_scaling():
+    old_x, old_y = engine.SCALE_X, engine.SCALE_Y
+    try:
+        engine.SCALE_X, engine.SCALE_Y = 2.0, 1.5
+        assert engine.scale_point((100, 200)) == (200, 300)
+        assert engine.scale_region((10, 20, 30, 40)) == (20, 30, 60, 60)
+    finally:
+        engine.SCALE_X, engine.SCALE_Y = old_x, old_y
