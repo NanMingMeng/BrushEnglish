@@ -25,3 +25,11 @@ dist/
 build/
 内置OCR/
 *.spec.bak
+
+# 截图等正式整理后再提交
+docs/images/
+
+# 本地窗口设置和申请材料，不入库
+助手窗口设置.json
+申请材料-Codex开源计划.md
+
