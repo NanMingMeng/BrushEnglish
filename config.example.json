@@ -1,0 +1,256 @@
+{
+  "umi_ocr": {
+    "url": "http://127.0.0.1:1224/api/ocr",
+    "timeout": 10,
+    "retry_times": 3,
+    "retry_delay": 0.5
+  },
+  "group_size": 30,
+  "fuzzy": {
+    "type_threshold": 0.45,
+    "option_threshold": 0.35
+  },
+  "image_detect_enabled": true,
+  "regions": {
+    "learn": {
+      "btn_view": [
+        1675,
+        432
+      ],
+      "btn_easy": [
+        1846,
+        210
+      ],
+      "learn_next": [
+        1679,
+        943
+      ],
+      "word": [
+        1467,
+        188,
+        1799,
+        290
+      ],
+      "meaning": [
+        1480,
+        399,
+        1914,
+        596
+      ],
+      "today": [
+        1632,
+        95,
+        1735,
+        160
+      ],
+      "word_index": [
+        1294,
+        371,
+        1400,
+        410
+      ],
+      "dict_name": [
+        1480,
+        130,
+        1914,
+        180
+      ]
+    },
+    "test": {
+      "input_spell": [
+        1675,
+        378
+      ],
+      "btn_confirm": [
+        1680,
+        465
+      ],
+      "test_next": [
+        1679,
+        980
+      ],
+      "btn_finish": [
+        1670,
+        980
+      ],
+      "btn_back": [
+        1470,
+        50
+      ],
+      "btn_task": [
+        1055,
+        400
+      ],
+      "btn_again": [
+        1800,
+        960
+      ],
+      "option_coords": [
+        [
+          1680,
+          420
+        ],
+        [
+          1680,
+          500
+        ],
+        [
+          1680,
+          580
+        ],
+        [
+          1680,
+          650
+        ]
+      ],
+      "number": [
+        1457,
+        99,
+        1616,
+        134
+      ],
+      "question_type": [
+        1463,
+        167,
+        1632,
+        200
+      ],
+      "option_regions": [
+        [
+          1465,
+          388,
+          1895,
+          440
+        ],
+        [
+          1465,
+          468,
+          1895,
+          520
+        ],
+        [
+          1465,
+          545,
+          1895,
+          597
+        ],
+        [
+          1465,
+          619,
+          1895,
+          671
+        ]
+      ],
+      "btn_speaker_replay": [
+        1675,
+        340
+      ]
+    }
+  },
+  "answer_feedback": {
+    "enabled": true,
+    "probe_only": false,
+    "region": [
+      1540,
+      525,
+      1840,
+      665
+    ],
+    "wait_sec": 0.8,
+    "save_screenshot": true,
+    "right_keywords": [
+      "正确",
+      "答对",
+      "太棒",
+      "很棒",
+      "不错",
+      "厉害",
+      "correct",
+      "good"
+    ],
+    "wrong_keywords": [
+      "正确答案",
+      "正确拼写",
+      "不正确",
+      "答错",
+      "错误",
+      "wrong",
+      "incorrect"
+    ]
+  },
+  "anti_detect": {
+    "fail_rate": 0.07,
+    "hesitate_rate": 0.15,
+    "review_rate": 0.2,
+    "read_time_range": [
+      0,
+      0
+    ],
+    "operation_delay_range": [
+      0.5,
+      1.5
+    ],
+    "learn_read_time_range": [
+      0,
+      0
+    ],
+    "learn_click_delay_range": [
+      0.3,
+      0.8
+    ],
+    "rest_between_rounds": {
+      "enabled": false,
+      "min_seconds": 0,
+      "max_seconds": 0
+    },
+    "random_break": {
+      "enabled": false,
+      "interval_min_questions": 10,
+      "interval_max_questions": 20,
+      "break_min_seconds": 8,
+      "break_max_seconds": 20
+    },
+    "mouse_curve": true
+  },
+  "logging": {
+    "enabled": true,
+    "level": "DEBUG",
+    "max_file_size_mb": 50,
+    "backup_count": 5,
+    "log_to_file": true,
+    "log_to_console": true,
+    "show_elapsed_prefix": true
+  },
+  "hotkeys": {
+    "stop": "esc",
+    "pause": "space",
+    "save_progress": "f5"
+  },
+  "smart_learn": {
+    "enabled": true,
+    "require_confirmed_word": true,
+    "auto_confirm_new_words": false,
+    "progress_ocr_every_n": 7,
+    "auto_confirm_bank": true,
+    "fast_waits": true,
+    "continue_wait_sec": 1.2,
+    "finish_wait_sec": 1.5,
+    "spelling_confirm_wait_sec": 4,
+    "test_next_wait_min": 1.0,
+    "test_next_wait_max": 2.0,
+    "qn_none_retries": 3,
+    "qn_none_retry_wait_sec": 2.5
+  },
+  "spelling_source": "wordlist",
+  "asr": {
+    "enabled": true,
+    "engine": "whisper",
+    "model": "base.en",
+    "record_sec": 3.0,
+    "replay_on_fail": true,
+    "fallback_to_wordlist": true,
+    "match_cutoff": 0.8,
+    "device": null,
+    "notes": "拼写题听音识别：录系统内部声音 -> Whisper 转英文 -> 在本组词表里核对；对不上就点喇叭重播再听一次；两次都不行就退回词表顺序。"
+  }
+}
