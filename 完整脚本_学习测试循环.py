@@ -77,6 +77,7 @@ _SCREEN_CFG = CONFIG.get("screen", {}) or {}
 BASE_SCREEN_W = int(_SCREEN_CFG.get("base_width", 1920) or 1920)
 BASE_SCREEN_H = int(_SCREEN_CFG.get("base_height", 1080) or 1080)
 AUTO_SCALE_COORDS = bool(_SCREEN_CFG.get("auto_scale", True))
+DRY_RUN = bool(CONFIG.get("dry_run", False))
 
 
 def _current_screen_size():
@@ -1055,6 +1056,10 @@ def supervised_click(x, y, purpose="点击操作", detail=None):
 
     display_purpose = calibration_renames.get(purpose, purpose)
 
+    if DRY_RUN:
+        log.info(f"[干跑] 本应点击 ({x}, {y}) - {display_purpose}")
+        return True
+
     need_confirm = calibration_mode
 
     if need_confirm:
@@ -1168,6 +1173,10 @@ def supervised_key(key, purpose="按键操作", detail=None):
 
     display_purpose = calibration_renames.get(purpose, purpose)
 
+    if DRY_RUN:
+        log.info(f"[干跑] 本应按键 '{key}' - {display_purpose}")
+        return True
+
     need_confirm = calibration_mode
 
     if need_confirm:
@@ -1257,6 +1266,10 @@ def supervised_scroll(clicks, purpose="滚动操作"):
 
     if stop_flag:
         return None
+
+    if DRY_RUN:
+        log.info(f"[干跑] 本应滚动 {clicks} 格 - {purpose}")
+        return True
 
     if calibration_mode:
         log.info(f"[校准] 等待确认: 滚动 {clicks} 格 - {purpose}")
@@ -1589,6 +1602,9 @@ def set_english_input():
     现在改成：先给前台窗口发一条「请换成英文」的系统消息，
     发不进去再退回到「把脚本挂到那个窗口上再切」的老办法。
     """
+    if DRY_RUN:
+        log.debug("[干跑] 跳过输入法切换")
+        return True
     try:
         user32 = ctypes.windll.user32
         HKL_EN = 0x04090409                      # 英文（美国）键盘布局
@@ -1629,6 +1645,8 @@ def _ease_out(t):
     return 1 - (1 - t) ** 2
 
 def curve_move_to(x, y, duration=None):
+    if DRY_RUN:
+        return
     if not MOUSE_CURVE:
         pyautogui.moveTo(x, y, duration=duration or 0.1)
         return
@@ -1667,6 +1685,9 @@ def click(coord, delay=0.5, purpose="点击操作"):
     return True
 
 def _type_word(word):
+    if DRY_RUN:
+        log.info(f"[干跑] 本应输入: {word}")
+        return
     log.debug(f"[打字] 输入: {word}")
     for ch in word:
         if stop_flag:
@@ -1681,6 +1702,8 @@ def _type_word(word):
     time.sleep(random.uniform(0.1, 0.3))
 
 def _move_away():
+    if DRY_RUN:
+        return
     pyautogui.moveTo(*BTN_EASY)
 
 def format_td(seconds):
@@ -1692,6 +1715,8 @@ def format_td(seconds):
 
 # ================= 反检测模拟函数 =================
 def human_delay(min_sec=None, max_sec=None):
+    if DRY_RUN:
+        return 0.0
     if min_sec is None:
         min_sec, max_sec = OP_DELAY_RANGE[0], OP_DELAY_RANGE[1]
     delay = random.uniform(min_sec, max_sec)
@@ -1699,6 +1724,8 @@ def human_delay(min_sec=None, max_sec=None):
     return delay
 
 def human_read():
+    if DRY_RUN:
+        return
     read_time = random.uniform(*READ_TIME_RANGE)
     log.debug(f"[阅读] 思考 {read_time:.1f} 秒")
     _sleep(read_time)
@@ -3401,7 +3428,7 @@ def answer_spelling(question_num, word):
     set_english_input()
     click(INPUT_SPELL, 0.1)
 
-    is_intentional_fail = should_fail(question_num)
+    is_intentional_fail = False if DRY_RUN else should_fail(question_num)
     if is_intentional_fail:
         wrong_word = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz',
                                             k=random.randint(max(3, len(word)-2), len(word))))
@@ -3412,12 +3439,13 @@ def answer_spelling(question_num, word):
     else:
         log.info(f"[答题] 拼写题 #{question_num}: '{word}'")
         _type_word(word)
-        stats["total_correct_answers"] += 1
+        if not DRY_RUN:
+            stats["total_correct_answers"] += 1
 
     click(BTN_CONFIRM, 0.3)
 
     # 读一下屏幕上的对错反馈（答错时把正确答案抓回来，后面用它自动纠偏）
-    if FB_ENABLED and not is_intentional_fail:
+    if FB_ENABLED and not is_intentional_fail and not DRY_RUN:
         try:
             st, cw, _raw = read_answer_feedback(question_num, word)
             if st == "wrong" and cw and not FB_PROBE_ONLY:
@@ -3466,7 +3494,8 @@ def answer_choice(question_num, meaning, options):
     for i, opt in enumerate(options):
         log.info(f"  选项{chr(65+i)}: '{opt}'")
 
-    idx, score = fuzzy_option_match(meaning, options)
+    idx, score = fuzzy_option_match(
+        meaning, options, threshold=0.0 if DRY_RUN else FUZZY_OPTION_THRESHOLD)
 
     if idx is None:
         # 第一次没匹配上：重新截一次选项再认一遍（OCR 偶尔抖动）
@@ -3484,11 +3513,11 @@ def answer_choice(question_num, meaning, options):
         # 还是没把握：叫用户拍板，绝不偷偷选 A
         idx = _ask_user_pick_option(meaning, options)
 
-    hesitated = human_hesitate()
+    hesitated = False if DRY_RUN else human_hesitate()
     if hesitated:
         log.debug("[犹豫] 已模拟犹豫行为")
 
-    is_intentional_fail = should_fail(question_num)
+    is_intentional_fail = False if DRY_RUN else should_fail(question_num)
     if is_intentional_fail:
         wrong_idx = random.choice([i for i in range(len(OPT_COORDS)) if i != idx])
         log.info(f"[故意答错] 选择题 #{question_num}: 正确={chr(65+idx)}, 答错={chr(65+wrong_idx)}")
@@ -3498,7 +3527,8 @@ def answer_choice(question_num, meaning, options):
     else:
         log.info(f"[匹配] ✓ {chr(65+idx)} ({score:.2f})")
         click(OPT_COORDS[idx])
-        stats["total_correct_answers"] += 1
+        if not DRY_RUN:
+            stats["total_correct_answers"] += 1
 
 def test_30_words(word_dict_path=WORD_DICT, start_qn=1, completed_set=None, round_num=1):
     """测试30题，返回完成状态"""
@@ -3700,6 +3730,11 @@ def test_30_words(word_dict_path=WORD_DICT, start_qn=1, completed_set=None, roun
                 human_delay(0.2, 0.5)
             answer_choice(qn, meaning, options)
 
+        if DRY_RUN:
+            log.info("[干跑] 已识别第 1 题并算出计划动作，停止（未点击/未输入）")
+            stop_flag = True
+            break
+
         reviewed = human_review()
         if reviewed:
             log.debug("[检查] 已模拟检查行为")
@@ -3739,6 +3774,8 @@ def test_30_words(word_dict_path=WORD_DICT, start_qn=1, completed_set=None, roun
             test_completed=list(completed)
         )
 
+    if DRY_RUN:
+        return True
     return len(completed) >= 30
 
 
