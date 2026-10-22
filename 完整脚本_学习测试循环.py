@@ -70,6 +70,49 @@ def load_config():
 
 CONFIG = load_config()
 
+# ================= 坐标自适应（分辨率 / DPI 缩放） =================
+# 基准分辨率：配置里的坐标默认按 1920x1080、100% 缩放下采集。
+# 换屏幕或改缩放后，pyautogui.size() 会返回新的逻辑分辨率，这里按比例换算。
+_SCREEN_CFG = CONFIG.get("screen", {}) or {}
+BASE_SCREEN_W = int(_SCREEN_CFG.get("base_width", 1920) or 1920)
+BASE_SCREEN_H = int(_SCREEN_CFG.get("base_height", 1080) or 1080)
+AUTO_SCALE_COORDS = bool(_SCREEN_CFG.get("auto_scale", True))
+
+
+def _current_screen_size():
+    try:
+        w, h = pyautogui.size()
+        if w > 0 and h > 0:
+            return int(w), int(h)
+    except Exception:
+        pass
+    return BASE_SCREEN_W, BASE_SCREEN_H
+
+
+SCREEN_W, SCREEN_H = _current_screen_size()
+SCALE_X = (SCREEN_W / BASE_SCREEN_W) if (AUTO_SCALE_COORDS and BASE_SCREEN_W) else 1.0
+SCALE_Y = (SCREEN_H / BASE_SCREEN_H) if (AUTO_SCALE_COORDS and BASE_SCREEN_H) else 1.0
+
+
+def _sx(v):
+    return int(round(float(v) * SCALE_X))
+
+
+def _sy(v):
+    return int(round(float(v) * SCALE_Y))
+
+
+def scale_point(p):
+    """把基准分辨率下的点击坐标换算成当前分辨率。"""
+    return (_sx(p[0]), _sy(p[1]))
+
+
+def scale_region(r):
+    """把基准分辨率下的 OCR 区域换算成当前分辨率。"""
+    x1, y1, x2, y2 = r
+    return (_sx(x1), _sy(y1), _sx(x2), _sy(y2))
+
+
 UMI_OCR_URL = CONFIG.get("umi_ocr", {}).get("url", "http://127.0.0.1:1224/api/ocr")
 UMI_OCR_TIMEOUT = CONFIG.get("umi_ocr", {}).get("timeout", 10)
 UMI_OCR_RETRY = CONFIG.get("umi_ocr", {}).get("retry_times", 3)
@@ -83,28 +126,28 @@ IMAGE_DETECT_ENABLED = CONFIG.get("image_detect_enabled", True)
 LEARN = CONFIG.get("regions", {}).get("learn", {})
 TEST = CONFIG.get("regions", {}).get("test", {})
 
-BTN_VIEW = tuple(LEARN.get("btn_view", [1675, 432]))
-BTN_EASY = tuple(LEARN.get("btn_easy", [1846, 210]))
-BTN_CONTINUE_LEARN = tuple(LEARN.get("btn_continue_learn", [1685, 945]))
-LEARN_NEXT = tuple(LEARN.get("learn_next", [1679, 943]))
-REGION_WORD = tuple(LEARN.get("word", [1467, 188, 1799, 290]))
-REGION_MEAN = tuple(LEARN.get("meaning", [1480, 399, 1914, 596]))
-REGION_TODAY = tuple(LEARN.get("today", [1632, 95, 1735, 160]))
-REGION_WORD_INDEX = tuple(LEARN.get("word_index", [1294, 371, 1400, 410]))
+BTN_VIEW = scale_point(LEARN.get("btn_view", [1675, 432]))
+BTN_EASY = scale_point(LEARN.get("btn_easy", [1846, 210]))
+BTN_CONTINUE_LEARN = scale_point(LEARN.get("btn_continue_learn", [1685, 945]))
+LEARN_NEXT = scale_point(LEARN.get("learn_next", [1679, 943]))
+REGION_WORD = scale_region(LEARN.get("word", [1467, 188, 1799, 290]))
+REGION_MEAN = scale_region(LEARN.get("meaning", [1480, 399, 1914, 596]))
+REGION_TODAY = scale_region(LEARN.get("today", [1632, 95, 1735, 160]))
+REGION_WORD_INDEX = scale_region(LEARN.get("word_index", [1294, 371, 1400, 410]))
 
-INPUT_SPELL = tuple(TEST.get("input_spell", [1675, 378]))
-BTN_CONFIRM = tuple(TEST.get("btn_confirm", [1680, 465]))
-TEST_NEXT = tuple(TEST.get("test_next", [1679, 980]))
-BTN_FINISH = tuple(TEST.get("btn_finish", [1670, 980]))
-BTN_BACK = tuple(TEST.get("btn_back", [1470, 50]))
-BTN_TASK = tuple(TEST.get("btn_task", [1055, 400]))
-BTN_AGAIN = tuple(TEST.get("btn_again", [1800, 960]))
-OPT_COORDS = [tuple(c) for c in TEST.get("option_coords", [[1680,420],[1680,500],[1680,580],[1680,650]])]
-REGION_NUMBER = tuple(TEST.get("number", [1457, 99, 1616, 134]))
+INPUT_SPELL = scale_point(TEST.get("input_spell", [1675, 378]))
+BTN_CONFIRM = scale_point(TEST.get("btn_confirm", [1680, 465]))
+TEST_NEXT = scale_point(TEST.get("test_next", [1679, 980]))
+BTN_FINISH = scale_point(TEST.get("btn_finish", [1670, 980]))
+BTN_BACK = scale_point(TEST.get("btn_back", [1470, 50]))
+BTN_TASK = scale_point(TEST.get("btn_task", [1055, 400]))
+BTN_AGAIN = scale_point(TEST.get("btn_again", [1800, 960]))
+OPT_COORDS = [scale_point(c) for c in TEST.get("option_coords", [[1680,420],[1680,500],[1680,580],[1680,650]])]
+REGION_NUMBER = scale_region(TEST.get("number", [1457, 99, 1616, 134]))
 # 测试页「目标单词」区域：用来认屏幕上真正的单词。没校准过时为 None，自动全屏定位
-TEST_WORD_REGION = tuple(TEST.get("word_region")) if TEST.get("word_region") else None
-REGION_QUESTION_TYPE = tuple(TEST.get("question_type", [1463, 167, 1632, 200]))
-REGION_OPTION = [tuple(r) for r in TEST.get("option_regions", [
+TEST_WORD_REGION = scale_region(TEST.get("word_region")) if TEST.get("word_region") else None
+REGION_QUESTION_TYPE = scale_region(TEST.get("question_type", [1463, 167, 1632, 200]))
+REGION_OPTION = [scale_region(r) for r in TEST.get("option_regions", [
     (1465,388,1895,440),(1465,468,1895,520),
     (1465,545,1895,597),(1465,619,1895,671),
 ])]
@@ -151,7 +194,7 @@ FB = CONFIG.get("answer_feedback", {})
 FB_ENABLED = bool(FB.get("enabled", True))
 # probe_only=true：只记录+打日志，不改答题行为（先摸清屏幕到底显示什么）
 FB_PROBE_ONLY = bool(FB.get("probe_only", True))
-FB_REGION = tuple(FB["region"]) if FB.get("region") else None
+FB_REGION = scale_region(FB["region"]) if FB.get("region") else None
 FB_WAIT = float(FB.get("wait_sec", 0.8))
 FB_RIGHT_KW = [str(k) for k in FB.get("right_keywords", [])]
 FB_WRONG_KW = [str(k) for k in FB.get("wrong_keywords", [])]
@@ -161,7 +204,7 @@ _RETRY_WORDS = {}
 
 # 屏幕分区：助手窗口占左半边(x<960)，OneClass答题页占右半边(x>=1000)。
 # 全屏OCR必须过滤掉助手窗口的文字，否则会认到"内置 Rapid""非故意答错率"这类界面文字。
-ONECLASS_X_MIN = 1000
+ONECLASS_X_MIN = _sx(1000)
 FB_SAVE_SHOT = bool(FB.get("save_screenshot", True))
 # 反馈截图单独放子目录：测试开始时清理旧截图不会连它一起删掉
 FB_SHOT_DIR = SCREENSHOT_DIR / "反馈截图"
@@ -183,7 +226,7 @@ ASR_MATCH_CUTOFF = float(ASR.get("match_cutoff", 0.8))  # 听出来的词跟词�
 # 拼写题答案来源：asr = 听音识别（失败自动退回词表）；wordlist = 不用听音，直接按词表顺序填
 SPELLING_SOURCE = str(CONFIG.get("spelling_source", "asr")).strip().lower()
 _spk = TEST.get("btn_speaker_replay")                   # 拼写题界面上那个「喇叭」图标的坐标
-BTN_SPEAKER_REPLAY = tuple(_spk) if _spk else None
+BTN_SPEAKER_REPLAY = scale_point(_spk) if _spk else None
 
 LOG_CFG = CONFIG.get("logging", {})
 LOG_ENABLED = LOG_CFG.get("enabled", True)
@@ -220,7 +263,7 @@ def _migrate_current_dict_file():
 _migrate_current_dict_file()
 
 # 词典名称检测区域（在学习页面显示词典名称的位置）
-REGION_DICT_NAME = tuple(LEARN.get("dict_name", [1480, 130, 1914, 180]))
+REGION_DICT_NAME = scale_region(LEARN.get("dict_name", [1480, 130, 1914, 180]))
 
 def detect_dictionary_name():
     """
@@ -764,27 +807,27 @@ def apply_coord_profile(coord_config):
     LEARN = coord_config.get("learn", {})
     TEST = coord_config.get("test", {})
     
-    BTN_VIEW = tuple(LEARN.get("btn_view", [1675, 432]))
-    BTN_EASY = tuple(LEARN.get("btn_easy", [1846, 210]))
-    BTN_CONTINUE_LEARN = tuple(LEARN.get("btn_continue_learn", [1685, 945]))
-    LEARN_NEXT = tuple(LEARN.get("learn_next", [1679, 943]))
-    REGION_WORD = tuple(LEARN.get("word", [1467, 188, 1799, 290]))
-    REGION_MEAN = tuple(LEARN.get("meaning", [1480, 399, 1914, 596]))
-    REGION_TODAY = tuple(LEARN.get("today", [1632, 95, 1735, 160]))
-    REGION_WORD_INDEX = tuple(LEARN.get("word_index", [1294, 371, 1400, 410]))
-    REGION_DICT_NAME = tuple(LEARN.get("dict_name", [1480, 130, 1914, 180]))
+    BTN_VIEW = scale_point(LEARN.get("btn_view", [1675, 432]))
+    BTN_EASY = scale_point(LEARN.get("btn_easy", [1846, 210]))
+    BTN_CONTINUE_LEARN = scale_point(LEARN.get("btn_continue_learn", [1685, 945]))
+    LEARN_NEXT = scale_point(LEARN.get("learn_next", [1679, 943]))
+    REGION_WORD = scale_region(LEARN.get("word", [1467, 188, 1799, 290]))
+    REGION_MEAN = scale_region(LEARN.get("meaning", [1480, 399, 1914, 596]))
+    REGION_TODAY = scale_region(LEARN.get("today", [1632, 95, 1735, 160]))
+    REGION_WORD_INDEX = scale_region(LEARN.get("word_index", [1294, 371, 1400, 410]))
+    REGION_DICT_NAME = scale_region(LEARN.get("dict_name", [1480, 130, 1914, 180]))
     
-    INPUT_SPELL = tuple(TEST.get("input_spell", [1675, 378]))
-    BTN_CONFIRM = tuple(TEST.get("btn_confirm", [1680, 465]))
-    TEST_NEXT = tuple(TEST.get("test_next", [1679, 980]))
-    BTN_FINISH = tuple(TEST.get("btn_finish", [1670, 980]))
-    BTN_BACK = tuple(TEST.get("btn_back", [1470, 50]))
-    BTN_TASK = tuple(TEST.get("btn_task", [1055, 400]))
-    BTN_AGAIN = tuple(TEST.get("btn_again", [1800, 960]))
-    OPT_COORDS = [tuple(c) for c in TEST.get("option_coords", [[1680,420],[1680,500],[1680,580],[1680,650]])]
-    REGION_NUMBER = tuple(TEST.get("number", [1457, 99, 1616, 134]))
-    REGION_QUESTION_TYPE = tuple(TEST.get("question_type", [1463, 167, 1632, 200]))
-    REGION_OPTION = [tuple(r) for r in TEST.get("option_regions", [
+    INPUT_SPELL = scale_point(TEST.get("input_spell", [1675, 378]))
+    BTN_CONFIRM = scale_point(TEST.get("btn_confirm", [1680, 465]))
+    TEST_NEXT = scale_point(TEST.get("test_next", [1679, 980]))
+    BTN_FINISH = scale_point(TEST.get("btn_finish", [1670, 980]))
+    BTN_BACK = scale_point(TEST.get("btn_back", [1470, 50]))
+    BTN_TASK = scale_point(TEST.get("btn_task", [1055, 400]))
+    BTN_AGAIN = scale_point(TEST.get("btn_again", [1800, 960]))
+    OPT_COORDS = [scale_point(c) for c in TEST.get("option_coords", [[1680,420],[1680,500],[1680,580],[1680,650]])]
+    REGION_NUMBER = scale_region(TEST.get("number", [1457, 99, 1616, 134]))
+    REGION_QUESTION_TYPE = scale_region(TEST.get("question_type", [1463, 167, 1632, 200]))
+    REGION_OPTION = [scale_region(r) for r in TEST.get("option_regions", [
         (1465,388,1895,440),(1465,468,1895,520),
         (1465,545,1895,597),(1465,619,1895,671),
     ])]
@@ -837,6 +880,10 @@ def setup_logger():
     return logger
 
 log = setup_logger()
+try:
+    log.info(f"[坐标] 基准 {BASE_SCREEN_W}x{BASE_SCREEN_H}，当前 {SCREEN_W}x{SCREEN_H}，缩放 X={SCALE_X:.2f} Y={SCALE_Y:.2f}")
+except Exception:
+    pass
 
 
 # ================= 全局状态 =================
