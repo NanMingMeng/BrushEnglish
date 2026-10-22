@@ -59,3 +59,24 @@ def test_coordinate_scaling():
         assert engine.scale_region((10, 20, 30, 40)) == (20, 30, 60, 60)
     finally:
         engine.SCALE_X, engine.SCALE_Y = old_x, old_y
+
+
+def test_dry_run_blocks_click_key_type_move(monkeypatch):
+    old_dry_run = engine.DRY_RUN
+    calls = []
+    try:
+        engine.DRY_RUN = True
+        monkeypatch.setattr(engine.pyautogui, "click", lambda *a, **k: calls.append("click"))
+        monkeypatch.setattr(engine.pyautogui, "moveTo", lambda *a, **k: calls.append("moveTo"))
+        monkeypatch.setattr(engine.pyautogui, "typewrite", lambda *a, **k: calls.append("typewrite"))
+        monkeypatch.setattr(engine.keyboard, "press_and_release", lambda *a, **k: calls.append("key"))
+
+        assert engine.supervised_click(100, 200, "测试点击") is True
+        assert engine.supervised_key("enter", "测试按键") is True
+        engine._type_word("apple")
+        engine.curve_move_to(300, 400)
+        engine._move_away()
+
+        assert calls == []
+    finally:
+        engine.DRY_RUN = old_dry_run
