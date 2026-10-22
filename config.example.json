@@ -252,5 +252,10 @@
     "match_cutoff": 0.8,
     "device": null,
     "notes": "拼写题听音识别：录系统内部声音 -> Whisper 转英文 -> 在本组词表里核对；对不上就点喇叭重播再听一次；两次都不行就退回词表顺序。"
+  },
+  "screen": {
+    "base_width": 1920,
+    "base_height": 1080,
+    "auto_scale": true
   }
 }
