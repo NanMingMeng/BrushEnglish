@@ -2763,10 +2763,10 @@ def _contains_cjk(text):
     """判断一段文字里有没有中文（有中文基本就是释义行，不是单词行）"""
     return any('\u4e00' <= ch <= '\u9fff' for ch in str(text))
 
-def ocr_screen_word():
+def ocr_screen_word(word_dict=None):
     """
     认出测试页当前显示的目标单词（英文），用于取代「按题号猜词表」
-    ① 校准过单词区域就直接认该区域；② 否则全屏 OCR 按位置挑最像单词的块
+    ① 校准过单词区域就直接认该区域；② 否则全屏 OCR，并优先选择词表/总题库里真实存在的词
     """
     def pick(text):
         c = _clean_en_token(text)
@@ -2813,9 +2813,36 @@ def ocr_screen_word():
     if not cands:
         log.warning("[单词识别] 全屏OCR没找到英文单词")
         return None
-    cands.sort()
-    log.info(f"[单词识别] 候选: {[c[1] for c in cands[:5]]}")
-    return cands[0][1]
+
+    # 候选里可能混着界面上的英文标签（例如 Rapid/OneClass）。
+    # 优先选「本组词表 / 总题库里真实存在」的词，而不是只按屏幕位置取最上面那个。
+    group_words = set()
+    if isinstance(word_dict, dict):
+        for item in word_dict.values():
+            if isinstance(item, dict):
+                w = str(item.get("word", "")).strip().lower()
+                if w:
+                    group_words.add(w)
+
+    scored = []
+    for y, w in cands:
+        score = 0
+        if w in group_words:
+            score += 10
+        try:
+            m, _src = lookup_word_meaning(w, word_dict)
+            if m:
+                score += 4
+        except Exception:
+            pass
+        scored.append((score, -y, w, y))
+
+    scored.sort(reverse=True)
+    log.info(
+        "[单词识别] 候选评分: "
+        + ", ".join(f"{w}({score})" for score, _ny, w, _y in scored[:5])
+    )
+    return scored[0][2]
 
 _BANK_WORDS_CACHE = {}
 
@@ -3689,7 +3716,7 @@ def test_30_words(word_dict_path=WORD_DICT, start_qn=1, completed_set=None, roun
             else:
                 log.warning(f"[步骤3] 拼写题没听出来，退回词表顺序 '{word}'（有错位风险）")
         else:
-            sw = ocr_screen_word()
+            sw = ocr_screen_word(word_dict)
             if sw:
                 if sw.lower() == str(word).strip().lower():
                     log.info(f"[步骤3] 屏幕单词='{sw}'，与词表一致")
